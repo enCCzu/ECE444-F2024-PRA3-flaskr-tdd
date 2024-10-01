@@ -3,7 +3,6 @@ from flask import Flask, g, render_template, request, session, flash, redirect, 
 
 
 # configuration
-# configuration
 DATABASE = "flaskr.db"
 USERNAME = "admin"
 PASSWORD = "admin"
