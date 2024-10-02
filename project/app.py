@@ -29,9 +29,6 @@ if url.startswith("postgres://"):
 
 SQLALCHEMY_DATABASE_URI = url
 SQLALCHEMY_TRACK_MODIFICATIONS = False
-"""Make sure to run: $env:DATABASE_URL="the value of the external database URL you copied earlier"
-FLASK_APP=project/app.py python3 -m flask shell
-db.create_all()"""
 
 # create and initialize a new Flask app
 app = Flask(__name__)
