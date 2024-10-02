@@ -81,3 +81,26 @@ def test_delete_message(client):
     rv = client.get('/delete/1')
     data = json.loads(rv.data)
     assert data["status"] == 1
+    
+def test_search(client):
+    response = client.get("/search/", content_type="html/text")
+    assert response.status_code == 200
+    
+def test_search_post(client): 
+    """Ensure that the user can search for posts"""
+    # - Arrange - (prepare data for test)
+    # login so that the user can add a post 
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    # add a post to be searched 
+    client.post(
+        "/add",
+        data=dict(title="Mango", text="helps test the search function"),
+        follow_redirects=True,
+    )
+    # - Act - (change state)
+    # get query --> check flask docs for info
+    rv = client.get('/search/', query_string={'query': 'mango'}, follow_redirects=True)
+    
+    # - Assert - (compare with desired result)
+    assert b"Mango" in rv.data
+    assert b"helps test the search function" in rv.data
