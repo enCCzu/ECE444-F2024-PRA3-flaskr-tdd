@@ -1,7 +1,9 @@
 import sqlite3
+import os
 from pathlib import Path
 from flask import Flask, g, render_template, request, session, flash, redirect, url_for, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from functools import wraps
 
 
 basedir = Path(__file__).resolve().parent
@@ -11,8 +13,19 @@ DATABASE = "flaskr.db"
 USERNAME = "admin"
 PASSWORD = "admin"
 SECRET_KEY = "change_me"
-SQLALCHEMY_DATABASE_URI = f'sqlite:///{Path(basedir).joinpath(DATABASE)}'
+
+url = os.getenv('DATABASE_URL', f'sqlite:///{Path(basedir).joinpath(DATABASE)}')
+
+if url.startswith("postgres://"):
+    url = url.replace("postgres://", "postgresql://", 1)
+
+SQLALCHEMY_DATABASE_URI = url
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+""" 
+Make sure to run: $env:DATABASE_URL="the value of the external database URL you copied earlier"
+FLASK_APP=project/app.py python3 -m flask shell 
+db.create_all()
+"""
 
 
 # create and initialize a new Flask app
@@ -29,6 +42,15 @@ with app.app_context():
 
 from project import models
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            flash('Please log in.')
+            return jsonify({'status': 0, 'message': 'Please log in.'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 @app.route('/')
 def index():
@@ -38,16 +60,14 @@ def index():
 
 
 @app.route('/add', methods=['POST'])
+@login_required
 def add_entry():
     """Adds new post to the database."""
-    if not session.get('logged_in'):
-        abort(401)
     new_entry = models.Post(request.form['title'], request.form['text'])
     db.session.add(new_entry)
     db.session.commit()
     flash('New entry was successfully posted')
     return redirect(url_for('index'))
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -73,11 +93,13 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route('/delete/<int:post_id>', methods=['GET'])
+@login_required
 def delete_entry(post_id):
     """Deletes post from database."""
     result = {'status': 0, 'message': 'Error'}
     try:
-        db.session.query(models.Post).filter_by(id=post_id).delete()
+        new_id = post_id
+        db.session.query(models.Post).filter_by(id=new_id).delete()
         db.session.commit()
         result = {'status': 1, 'message': "Post Deleted"}
         flash('The entry was deleted.')

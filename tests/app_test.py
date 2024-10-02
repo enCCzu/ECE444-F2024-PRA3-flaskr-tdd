@@ -66,6 +66,13 @@ def test_login_logout(client):
 
 def test_messages(client):
     """Ensure that user can post messages"""
+    # if not logged in 
+    rv = client.post(
+        "/add",
+        data=dict(title="Unauthorized Post", text="unauthorized post"),
+        follow_redirects=True,
+    )
+    assert rv.status_code == 401
     login(client, app.config["USERNAME"], app.config["PASSWORD"])
     rv = client.post(
         "/add",
@@ -78,7 +85,11 @@ def test_messages(client):
 
 def test_delete_message(client):
     """Ensure the messages are being deleted"""
-    rv = client.get('/delete/1')
+    rv = client.get("/delete/1")
+    data = json.loads(rv.data)
+    assert data["status"] == 0
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    rv = client.get("/delete/1")
     data = json.loads(rv.data)
     assert data["status"] == 1
     
