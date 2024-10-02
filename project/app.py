@@ -23,6 +23,10 @@ app.config.from_object(__name__)
 # init sqlalchemy
 db = SQLAlchemy(app)
 
+# Run just in case to ensure tables exist before running
+with app.app_context():
+    db.create_all()
+
 from project import models
 
 
