@@ -1,4 +1,3 @@
-import os
 import pytest
 import json
 from pathlib import Path
@@ -66,7 +65,7 @@ def test_login_logout(client):
 
 def test_messages(client):
     """Ensure that user can post messages"""
-    # if not logged in 
+    # if not logged in
     rv = client.post(
         "/add",
         data=dict(title="Unauthorized Post", text="unauthorized post"),
@@ -83,6 +82,7 @@ def test_messages(client):
     assert b"&lt;Hello&gt;" in rv.data
     assert b"<strong>HTML</strong> allowed here" in rv.data
 
+
 def test_delete_message(client):
     """Ensure the messages are being deleted"""
     rv = client.get("/delete/1")
@@ -92,17 +92,19 @@ def test_delete_message(client):
     rv = client.get("/delete/1")
     data = json.loads(rv.data)
     assert data["status"] == 1
-    
+
+
 def test_search(client):
     response = client.get("/search/", content_type="html/text")
     assert response.status_code == 200
-    
-def test_search_post(client): 
+
+
+def test_search_post(client):
     """Ensure that the user can search for posts"""
     # - Arrange - (prepare data for test)
-    # login so that the user can add a post 
+    # login so that the user can add a post
     login(client, app.config["USERNAME"], app.config["PASSWORD"])
-    # add a post to be searched 
+    # add a post to be searched
     client.post(
         "/add",
         data=dict(title="Mango", text="helps test the search function"),
@@ -110,8 +112,8 @@ def test_search_post(client):
     )
     # - Act - (change state)
     # get query --> check flask docs for info
-    rv = client.get('/search/', query_string={'query': 'mango'}, follow_redirects=True)
-    
+    rv = client.get("/search/", query_string={"query": "mango"}, follow_redirects=True)
+
     # - Assert - (compare with desired result)
     assert b"Mango" in rv.data
     assert b"helps test the search function" in rv.data
